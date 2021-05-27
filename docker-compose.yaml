@@ -1,0 +1,21 @@
+version: '3'
+services:
+  nasa-client:
+    build: ./client
+    image: client:1.0
+    environment:
+     - API_KEY=${API_KEY}
+    volumes:
+     - nasa-data:/home/client/data
+  flask-api:
+    build: ./server
+    image: flask:1.0
+    ports:
+     - 5000:5000
+    volumes:
+     - nasa-data:/home/client/data
+    depends_on:
+      - nasa-client
+volumes:
+  nasa-data:
+    driver: local

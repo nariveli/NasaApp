@@ -1,0 +1,6 @@
+{
+    "urls" : {
+        "this_week" : "https://api.nasa.gov/neo/rest/v1/feed?start_date={}&end_date={}&api_key={}",
+        "next_week" : "https://api.nasa.gov/neo/rest/v1/feed?start_date={}&end_date={}&api_key={}"
+    }
+}

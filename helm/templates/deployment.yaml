@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-deployment
+  labels:
+    app: {{ .Values.app }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app }}
+    spec:
+      containers:
+      - name: {{ .Values.app }}
+        image: "{{ .Values.image.repository }}/{{ .Values.image.server }}:{{ .Values.image.server_tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        volumeMounts:
+        - name: {{ .Values.volumes.name }}
+          mountPath: {{ .Values.volumes.mountPath }}
+        ports:
+        - containerPort: 5000
+      volumes:
+        - name: {{ .Values.volumes.name }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.volumes.claimname }}
+      imagePullSecrets:
+      - name: {{ .Values.imagePullSecrets }}
+      initContainers:
+      - name: client-api
+        image: "{{ .Values.image.repository }}/{{ .Values.image.client }}:{{ .Values.image.client_tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        volumeMounts:
+        - name: {{ .Values.volumes.name }}
+          mountPath: {{ .Values.volumes.mountPath }}
+        env:
+        - name: {{ .Values.env.name }}
+          valueFrom:
+            secretKeyRef:
+              name: server-secret
+              key: api-key
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-service
+spec:
+  selector:
+    app: {{ .Values.app }}
+  type: {{ .Values.service.type }}
+  
+  ports:
+    - protocol: TCP
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetport }}
+      nodePort: {{ .Values.service.nodeport }}
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+    name: server-secret
+type: Opaque
+data:
+    api-key: {{ .Values.env.key }}
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.volumes.name }}
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 100Mi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: {{ .Values.volumes.hostPath }}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.volumes.claimname }}
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi

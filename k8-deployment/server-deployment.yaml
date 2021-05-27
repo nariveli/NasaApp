@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-deployment
+  labels:
+    app: flask-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flask-api
+  template:
+    metadata:
+      labels:
+        app: flask-api
+    spec:
+      volumes:
+        - name: nasa-pv-data
+          persistentVolumeClaim:
+            claimName: nasa-pv-claim
+      containers:
+      - name: flask-api
+        image: nariveli/flask:1.0
+        imagePullPolicy: Always
+        volumeMounts:
+        - name: nasa-pv-data
+          mountPath: /home/client/data
+        ports:
+        - containerPort: 5000
+      imagePullSecrets:
+      - name: regcred
+      initContainers:
+      - name: client-api
+        image: nariveli/client:1.0
+        imagePullPolicy: Always
+        volumeMounts:
+        - name: nasa-pv-data
+          mountPath: /home/client/data
+        env:
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: server-secret
+              key: api-key
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-service
+spec:
+  selector:
+    app: flask-api
+  type: LoadBalancer  
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+      nodePort: 30000
