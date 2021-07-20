@@ -9,6 +9,6 @@ RUN mkdir /home/client/data
 
 VOLUME /home/client/data
 
-COPY client.py database.py conf.json .
+COPY client.py database.py conf.json ./
 
 CMD ["python3", "./client.py"]
