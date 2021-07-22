@@ -12,18 +12,33 @@ variables:
   tag: '$(Build.BuildId)'
 
 stages:
-- stage: Build
-  displayName: Build image
+- stage: Build_client
+  displayName: Build client image
   jobs:
-  - job: Build
-    displayName: Build
+  - job: BuildClient
+    displayName: BuildClient
     pool:
       vmImage: ubuntu-latest
     steps:
     - task: Docker@2
-      displayName: Build an image
+      displayName: Build a client image
       inputs:
         command: build
         dockerfile: '$(Build.SourcesDirectory)/client/Dockerfile'
+        tags: |
+          $(tag)
+- stage: Build_server
+  displayName: Build server image
+  jobs:
+  - job: Build
+    displayName: BuildServer
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: Docker@2
+      displayName: Build a server image
+      inputs:
+        command: build
+        dockerfile: '$(Build.SourcesDirectory)/server/Dockerfile'
         tags: |
           $(tag)
